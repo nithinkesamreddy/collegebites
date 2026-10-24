@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusBite | Cart & Checkout</title>
+  <meta name="description" content="Review your cart and place your order at CampusBite campus canteen.">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <a class="brand" href="/">Campus<span>Bite</span></a>
+    <nav class="navbar-right">
+      <a class="nav-link" href="/">Menu</a>
+      <a class="nav-link" href="/orders">Manage Orders</a>
+      <a class="nav-cart-btn active" href="/cart" id="nav-cart-link">
+        🛒 Cart <span id="cart-count">0</span>
+      </a>
+    </nav>
+  </header>
+
+  <main class="container">
+
+    <!-- PAGE HERO -->
+    <div class="page-hero">
+      <h1>🛒 Your Cart</h1>
+      <p>Review your items and place your order below.</p>
+    </div>
+
+    <!-- EMPTY CART STATE (shown when cart is empty) -->
+    <div id="empty-cart-state" class="empty-state" style="display:none;">
+      <div class="empty-icon">🍽️</div>
+      <h3>Your cart is empty</h3>
+      <p>Looks like you haven't added anything yet.</p>
+      <br>
+      <a href="/" class="btn btn-primary" style="display:inline-flex;width:auto;padding:12px 28px;margin-top:8px;">
+        Browse Menu
+      </a>
+    </div>
+
+    <!-- CART LAYOUT -->
+    <div class="cart-layout" id="cart-layout">
+
+      <!-- LEFT: Cart Items -->
+      <div>
+        <div class="cart-panel">
+          <div class="cart-panel-header">
+            <h2>Order Items</h2>
+            <button id="btn-clear-cart" class="btn-clear">Clear All</button>
+          </div>
+          <div id="cart-items-list"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Summary + Checkout -->
+      <div>
+        <div class="order-summary">
+          <h2>Order Summary</h2>
+
+          <div class="summary-line">
+            <span id="summary-count">0 items</span>
+            <span id="summary-subtotal">₹0.00</span>
+          </div>
+          <div class="summary-line">
+            <span>Delivery</span>
+            <span style="color:var(--green);font-weight:600;">Free</span>
+          </div>
+          <div class="summary-line total">
+            <span>Total</span>
+            <span id="summary-total">₹0.00</span>
+          </div>
+
+          <!-- Checkout Form -->
+          <div class="checkout-form">
+            <h3>Your Details</h3>
+
+            <div class="form-group">
+              <label for="customer-name">Full Name *</label>
+              <input id="customer-name" type="text"
+                     placeholder="e.g. Rahul Sharma"
+                     autocomplete="name">
+              <p class="field-error" id="err-name">Please enter your name.</p>
+            </div>
+
+            <div class="form-group">
+              <label for="customer-contact">Phone / Roll No *</label>
+              <input id="customer-contact" type="text"
+                     placeholder="e.g. 9876543210"
+                     autocomplete="tel">
+              <p class="field-error" id="err-contact">Please enter your phone or roll number.</p>
+            </div>
+
+            <button id="btn-place-order" class="btn btn-primary" style="margin-top:8px;">
+              Place Order
+            </button>
+            <a href="/" class="btn btn-secondary" style="display:inline-flex;">
+              ← Continue Shopping
+            </a>
+          </div>
+
+          <!-- Order Confirmation (shown after success) -->
+          <div class="order-confirm" id="order-confirm">
+            <div class="confirm-icon">🎉</div>
+            <h3>Order Placed!</h3>
+            <p>Your order has been received.</p>
+            <div class="order-id-badge" id="confirm-order-id"></div>
+            <p style="font-size:13px;color:var(--muted);">Show this ID at the counter to pick up your food.</p>
+            <a href="/orders" class="btn btn-primary" style="margin-top:18px;">
+              Track My Order
+            </a>
+            <a href="/" class="btn btn-secondary" style="display:inline-flex;margin-top:8px;">
+              Order More Food
+            </a>
+          </div>
+
+        </div><!-- /order-summary -->
+      </div>
+
+    </div><!-- /cart-layout -->
+
+  </main>
+
+  <footer>
+    <span class="footer-brand">CampusBite</span>
+    <span>© 2026 · Made for campus life 🎓</span>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+</body>
+</html>

@@ -1,168 +1,254 @@
+'use strict';
 
-const menuGrid = document.getElementById("menu-grid");
-const menuMessage = document.getElementById("menu-message");
-const searchInput = document.getElementById("search-input");
-const categoryFilters = document.getElementById("category-filters");
-const cartCount = document.getElementById("cart-count");
+/* ── DOM refs ─────────────────────────────── */
+const menuGrid       = document.getElementById('menu-grid');
+const menuStatus     = document.getElementById('menu-status');
+const searchInput    = document.getElementById('search-input');
+const categoryFilters = document.getElementById('category-filters');
+const cartCount      = document.getElementById('cart-count');
 
-let menuItems = [];
-let selectedCategory = "All";
+/* ── State ──────────────────────────────────── */
+let menuItems        = [];
+let selectedCategory = 'All';
 
+/* ── Emoji map for food categories ─────────── */
+const CATEGORY_EMOJI = {
+  Breakfast: '🍳',
+  Snacks:    '🥪',
+  Meals:     '🍛',
+  Drinks:    '🥤',
+};
+
+function foodEmoji(item) {
+  if (item.image_url) return null; // has real image
+  return CATEGORY_EMOJI[item.category] || '🍽️';
+}
+
+/* ─────────────────────────────────────────────
+   CART HELPERS
+───────────────────────────────────────────── */
 function getCart() {
-    try {
-        const cart = JSON.parse(
-            localStorage.getItem("campusbite_cart") || "[]"
-        );
-        return Array.isArray(cart) ? cart : [];
-    } catch {
-        return [];
-    }
+  try {
+    const c = JSON.parse(localStorage.getItem('campusbite_cart') || '[]');
+    return Array.isArray(c) ? c : [];
+  } catch { return []; }
 }
 
 function updateCartCount() {
-    cartCount.textContent = getCart().reduce(
-        (sum, item) => sum + item.quantity, 0
-    );
+  const total = getCart().reduce((s, i) => s + i.quantity, 0);
+  cartCount.textContent = total;
 }
 
+/* ─────────────────────────────────────────────
+   TOAST NOTIFICATION
+───────────────────────────────────────────── */
+let toastTimer = null;
+
+function showToast(message, type = 'success') {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  clearTimeout(toastTimer);
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> ${message}`;
+  document.body.appendChild(toast);
+
+  toastTimer = setTimeout(() => {
+    toast.classList.add('hide');
+    setTimeout(() => toast.remove(), 350);
+  }, 2400);
+}
+
+/* ─────────────────────────────────────────────
+   CATEGORY FILTERS
+───────────────────────────────────────────── */
 function renderCategories() {
-    const categories = [
-        "All",
-        ...new Set(menuItems.map(item => item.category))
-    ];
-
-    categoryFilters.replaceChildren();
-
-    categories.forEach(category => {
-        const button = document.createElement("button");
-        button.className = "filter";
-        button.textContent = category;
-
-        if (category === selectedCategory) {
-            button.classList.add("active");
-        }
-
-        button.addEventListener("click", () => {
-            selectedCategory = category;
-            renderCategories();
-            renderMenu();
-        });
-
-        categoryFilters.appendChild(button);
+  const cats = ['All', ...new Set(menuItems.map(i => i.category))];
+  categoryFilters.replaceChildren();
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'filter' + (cat === selectedCategory ? ' active' : '');
+    btn.textContent = (CATEGORY_EMOJI[cat] ? CATEGORY_EMOJI[cat] + ' ' : '') + cat;
+    btn.setAttribute('aria-pressed', cat === selectedCategory);
+    btn.addEventListener('click', () => {
+      selectedCategory = cat;
+      renderCategories();
+      renderMenu();
     });
+    categoryFilters.appendChild(btn);
+  });
 }
 
-function addToCart(item) {
-    if (!item.available) return;
+/* ─────────────────────────────────────────────
+   ADD TO CART
+───────────────────────────────────────────── */
+function addToCart(item, btn) {
+  if (!item.available) return;
 
-    const cart = getCart();
-    const existing = cart.find(
-        entry => entry.menu_item_id === item.id
-    );
+  const cart = getCart();
+  const existing = cart.find(e => e.menu_item_id === item.id);
 
-    if (existing) {
-        if (existing.quantity >= 50) {
-            alert("Maximum quantity is 50 per item.");
-            return;
-        }
-        existing.quantity++;
-    } else {
-        cart.push({
-            menu_item_id: item.id,
-            name: item.name,
-            price: Number(item.price),
-            quantity: 1
-        });
+  if (existing) {
+    if (existing.quantity >= 50) {
+      showToast('Maximum 50 per item allowed.', 'error');
+      return;
     }
+    existing.quantity++;
+  } else {
+    cart.push({
+      menu_item_id: item.id,
+      name: item.name,
+      price: Number(item.price),
+      quantity: 1
+    });
+  }
 
-    localStorage.setItem("campusbite_cart", JSON.stringify(cart));
-    updateCartCount();
+  localStorage.setItem('campusbite_cart', JSON.stringify(cart));
+  updateCartCount();
+
+  // Button feedback
+  const original = btn.textContent;
+  btn.textContent = '✓ Added';
+  btn.classList.add('added');
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.textContent = original;
+    btn.classList.remove('added');
+    btn.disabled = false;
+  }, 1000);
+
+  showToast(`${item.name} added to cart!`);
 }
 
+/* ─────────────────────────────────────────────
+   RENDER MENU GRID
+───────────────────────────────────────────── */
 function renderMenu() {
-    const term = searchInput.value.trim().toLowerCase();
+  const term = searchInput.value.trim().toLowerCase();
 
-    const filtered = menuItems.filter(item => {
-        const matchesSearch =
-            item.name.toLowerCase().includes(term) ||
-            item.category.toLowerCase().includes(term);
+  const filtered = menuItems.filter(item => {
+    const matchSearch =
+      item.name.toLowerCase().includes(term) ||
+      (item.description || '').toLowerCase().includes(term) ||
+      item.category.toLowerCase().includes(term);
+    const matchCat =
+      selectedCategory === 'All' || item.category === selectedCategory;
+    return matchSearch && matchCat;
+  });
 
-        const matchesCategory =
-            selectedCategory === "All" ||
-            item.category === selectedCategory;
+  menuGrid.replaceChildren();
 
-        return matchesSearch && matchesCategory;
-    });
+  if (filtered.length === 0) {
+    menuStatus.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3>No items found</h3>
+        <p>Try a different search term or category.</p>
+      </div>`;
+    return;
+  }
 
-    menuGrid.replaceChildren();
+  menuStatus.textContent = '';
 
-    if (filtered.length === 0) {
-        menuMessage.textContent = "No matching food items found.";
-        return;
+  filtered.forEach((item, idx) => {
+    const card = document.createElement('article');
+    card.className = 'food-card';
+    card.style.animationDelay = `${idx * 40}ms`;
+
+    const emoji = foodEmoji(item);
+
+    /* Image area */
+    const imgDiv = document.createElement('div');
+    imgDiv.className = 'food-image';
+    if (item.image_url) {
+      const img = document.createElement('img');
+      img.src = item.image_url;
+      img.alt = item.name;
+      img.loading = 'lazy';
+      imgDiv.appendChild(img);
+    } else {
+      imgDiv.textContent = emoji;
     }
 
-    menuMessage.textContent = "";
+    if (!item.available) {
+      const overlay = document.createElement('div');
+      overlay.className = 'unavailable-overlay';
+      overlay.innerHTML = '<span class="unavailable-badge">Unavailable</span>';
+      imgDiv.appendChild(overlay);
+    }
 
-    filtered.forEach(item => {
-        const card = document.createElement("article");
-        card.className = "food-card";
+    /* Details area */
+    const details = document.createElement('div');
+    details.className = 'food-details';
 
-        const image = document.createElement("div");
-        image.className = "food-image";
-        image.textContent = "🍽️";
+    const cat = document.createElement('span');
+    cat.className = 'food-category';
+    cat.textContent = item.category;
 
-        const details = document.createElement("div");
-        details.className = "food-details";
+    const name = document.createElement('h3');
+    name.textContent = item.name;
 
-        const category = document.createElement("span");
-        category.className = "food-category";
-        category.textContent = item.category;
+    const desc = document.createElement('p');
+    desc.className = 'food-description';
+    desc.textContent = item.description || 'Freshly prepared in our campus kitchen.';
 
-        const name = document.createElement("h3");
-        name.textContent = item.name;
+    const bottom = document.createElement('div');
+    bottom.className = 'food-bottom';
 
-        const description = document.createElement("p");
-        description.className = "food-description";
-        description.textContent =
-            item.description || "Freshly prepared";
+    const price = document.createElement('span');
+    price.className = 'food-price';
+    price.textContent = `₹${Number(item.price).toFixed(2)}`;
 
-        const bottom = document.createElement("div");
-        bottom.className = "food-bottom";
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-button';
+    addBtn.textContent = item.available ? 'Add +' : 'Unavailable';
+    addBtn.disabled = !item.available;
+    addBtn.addEventListener('click', () => addToCart(item, addBtn));
 
-        const price = document.createElement("strong");
-        price.textContent = `₹${Number(item.price).toFixed(2)}`;
-
-        const button = document.createElement("button");
-        button.className = "add-button";
-        button.textContent = item.available ? "Add +" : "Unavailable";
-        button.disabled = !item.available;
-        button.addEventListener("click", () => addToCart(item));
-
-        bottom.append(price, button);
-        details.append(category, name, description, bottom);
-        card.append(image, details);
-        menuGrid.appendChild(card);
-    });
+    bottom.append(price, addBtn);
+    details.append(cat, name, desc, bottom);
+    card.append(imgDiv, details);
+    menuGrid.appendChild(card);
+  });
 }
 
+/* ─────────────────────────────────────────────
+   LOAD MENU FROM BACKEND
+───────────────────────────────────────────── */
 async function loadMenu() {
-    try {
-        const response = await fetch("/api/menu");
+  menuStatus.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
+  menuGrid.replaceChildren();
 
-        if (!response.ok) {
-            throw new Error("Menu request failed");
-        }
+  try {
+    const res = await fetch('/api/menu');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    menuItems = await res.json();
 
-        menuItems = await response.json();
-        renderCategories();
-        renderMenu();
-    } catch (error) {
-        console.error(error);
-        menuMessage.textContent =
-            "Unable to load menu. Check the Flask server.";
+    if (menuItems.length === 0) {
+      menuStatus.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🍽️</div>
+          <h3>Menu is empty</h3>
+          <p>No items have been added yet. Check back soon!</p>
+        </div>`;
+      return;
     }
+
+    renderCategories();
+    renderMenu();
+  } catch (err) {
+    console.error(err);
+    menuStatus.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <h3>Couldn't load the menu</h3>
+        <p>Make sure the Flask server is running and connected to the database.</p>
+      </div>`;
+  }
 }
 
-searchInput.addEventListener("input", renderMenu);
+/* ── Init ─────────────────────────────────── */
+searchInput.addEventListener('input', renderMenu);
 updateCartCount();
 loadMenu();
