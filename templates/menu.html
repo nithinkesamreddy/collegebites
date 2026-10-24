@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampusBite | Food Menu</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/menu.js') }}" defer></script>
+</head>
+<body>
+    <header class="navbar">
+        <a class="brand" href="/">CampusBite</a>
+        <nav>
+            <a class="active" href="/">Food Menu</a>
+            <a href="/cart">My Cart <span id="cart-count">0</span></a>
+            <a href="/orders">Manage Orders</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <p class="eyebrow">YOUR CAMPUS, YOUR FOOD</p>
+            <h1>Hungry? We've got you.</h1>
+            <p>Discover your favourite canteen meals.</p>
+        </section>
+
+        <section class="menu-section">
+            <div class="section-heading">
+                <div>
+                    <h2>Today's Menu</h2>
+                    <p>Fresh picks from your campus canteen.</p>
+                </div>
+                <input id="search-input" type="search"
+                       placeholder="Search food..."
+                       aria-label="Search food">
+            </div>
+
+            <div id="category-filters" class="filters"></div>
+            <p id="menu-message" role="status">Loading menu...</p>
+            <div id="menu-grid" class="menu-grid"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>CampusBite &copy; 2026 · Made for campus life</p>
+    </footer>
+</body>
+</html>
