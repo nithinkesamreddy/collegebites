@@ -179,28 +179,4 @@ DB_PORT=3306
 
 ---
 
-## 🌐 Deploying & Sharing a Public Link
 
-To obtain a shareable public URL with your MySQL database:
-
-### Method 1: Permanent 24/7 Cloud Hosting (PythonAnywhere)
-PythonAnywhere includes free Python hosting and a **free MySQL database** on the same dashboard without requiring a credit card:
-1. Register for a free account at [pythonanywhere.com](https://www.pythonanywhere.com/).
-2. Under the **Databases** tab, initialize a MySQL database and run `schema.sql`.
-3. Under the **Files** tab, upload the project files.
-4. Under the **Web** tab, configure the WSGI file to load `app.py`.
-5. Access your live website at: `https://<your-username>.pythonanywhere.com`.
-
-### Method 2: Instant Public Demo Link (ngrok Tunnel)
-To share a live link directly from your laptop while running XAMPP and Flask:
-1. Start Flask locally: `python app.py`.
-2. In a separate terminal, run:
-   ```bash
-   ngrok http 5000
-   ```
-3. Share the generated public URL (`https://<random-id>.ngrok-free.app`).
-
----
-
-## 📄 License
-This project is developed for educational and campus canteen management purposes.
