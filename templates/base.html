@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CollegeBites | Campus Food Ordering{% endblock %}</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/common.js') }}" defer></script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <header class="navbar">
+        <a class="brand" href="{{ url_for('menu_page') }}">CollegeBites</a>
+        <nav>
+            <a class="{% if active_page == 'menu' %}active{% endif %}"
+               href="{{ url_for('menu_page') }}">Food Menu</a>
+            <a class="{% if active_page == 'cart' %}active{% endif %}"
+               href="{{ url_for('cart_page') }}">My Cart
+                <span id="cart-count" data-cart-count>0</span>
+            </a>
+            <a class="{% if active_page == 'orders' %}active{% endif %}"
+               href="{{ url_for('orders_page') }}">Manage Orders</a>
+        </nav>
+    </header>
+
+    {% block content %}{% endblock %}
+
+    <footer>
+        <p>CollegeBites &copy; 2026 · Made for campus life</p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

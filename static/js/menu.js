@@ -1,29 +1,26 @@
+const {
+    MAX_ITEM_QUANTITY,
+    getCart,
+    saveCart,
+    updateCartBadge,
+    formatCurrency,
+    showToast
+} = window.CampusBite;
 
 const menuGrid = document.getElementById("menu-grid");
 const menuMessage = document.getElementById("menu-message");
 const searchInput = document.getElementById("search-input");
 const categoryFilters = document.getElementById("category-filters");
-const cartCount = document.getElementById("cart-count");
+
+const categoryIcons = {
+    Breakfast: "🥞",
+    Meals: "🍛",
+    Snacks: "🍔",
+    Drinks: "🥤"
+};
 
 let menuItems = [];
 let selectedCategory = "All";
-
-function getCart() {
-    try {
-        const cart = JSON.parse(
-            localStorage.getItem("campusbite_cart") || "[]"
-        );
-        return Array.isArray(cart) ? cart : [];
-    } catch {
-        return [];
-    }
-}
-
-function updateCartCount() {
-    cartCount.textContent = getCart().reduce(
-        (sum, item) => sum + item.quantity, 0
-    );
-}
 
 function renderCategories() {
     const categories = [
@@ -36,6 +33,7 @@ function renderCategories() {
     categories.forEach(category => {
         const button = document.createElement("button");
         button.className = "filter";
+        button.type = "button";
         button.textContent = category;
 
         if (category === selectedCategory) {
@@ -52,20 +50,24 @@ function renderCategories() {
     });
 }
 
-function addToCart(item) {
-    if (!item.available) return;
+function addToCart(item, button) {
+    if (!item.available) {
+        return;
+    }
 
     const cart = getCart();
-    const existing = cart.find(
-        entry => entry.menu_item_id === item.id
-    );
+    const existing = cart.find(entry => entry.menu_item_id === item.id);
 
     if (existing) {
-        if (existing.quantity >= 50) {
-            alert("Maximum quantity is 50 per item.");
+        if (existing.quantity >= MAX_ITEM_QUANTITY) {
+            showToast(
+                `Maximum quantity is ${MAX_ITEM_QUANTITY} per item.`,
+                "error"
+            );
             return;
         }
-        existing.quantity++;
+
+        existing.quantity += 1;
     } else {
         cart.push({
             menu_item_id: item.id,
@@ -75,8 +77,36 @@ function addToCart(item) {
         });
     }
 
-    localStorage.setItem("campusbite_cart", JSON.stringify(cart));
-    updateCartCount();
+    saveCart(cart);
+    showToast(`${item.name} added to cart`);
+
+    if (button) {
+        const originalLabel = button.textContent;
+        button.textContent = "Added ✓";
+        button.classList.add("added");
+
+        setTimeout(() => {
+            button.textContent = originalLabel;
+            button.classList.remove("added");
+        }, 900);
+    }
+}
+
+function buildFoodImage(item) {
+    const image = document.createElement("div");
+    image.className = "food-image";
+
+    if (item.image_url) {
+        const img = document.createElement("img");
+        img.src = item.image_url;
+        img.alt = item.name;
+        img.loading = "lazy";
+        image.appendChild(img);
+    } else {
+        image.textContent = categoryIcons[item.category] || "🍽️";
+    }
+
+    return image;
 }
 
 function renderMenu() {
@@ -107,9 +137,9 @@ function renderMenu() {
         const card = document.createElement("article");
         card.className = "food-card";
 
-        const image = document.createElement("div");
-        image.className = "food-image";
-        image.textContent = "🍽️";
+        if (!item.available) {
+            card.classList.add("unavailable");
+        }
 
         const details = document.createElement("div");
         details.className = "food-details";
@@ -123,24 +153,24 @@ function renderMenu() {
 
         const description = document.createElement("p");
         description.className = "food-description";
-        description.textContent =
-            item.description || "Freshly prepared";
+        description.textContent = item.description || "Freshly prepared";
 
         const bottom = document.createElement("div");
         bottom.className = "food-bottom";
 
         const price = document.createElement("strong");
-        price.textContent = `₹${Number(item.price).toFixed(2)}`;
+        price.textContent = formatCurrency(item.price);
 
         const button = document.createElement("button");
         button.className = "add-button";
+        button.type = "button";
         button.textContent = item.available ? "Add +" : "Unavailable";
         button.disabled = !item.available;
-        button.addEventListener("click", () => addToCart(item));
+        button.addEventListener("click", () => addToCart(item, button));
 
         bottom.append(price, button);
         details.append(category, name, description, bottom);
-        card.append(image, details);
+        card.append(buildFoodImage(item), details);
         menuGrid.appendChild(card);
     });
 }
@@ -164,5 +194,5 @@ async function loadMenu() {
 }
 
 searchInput.addEventListener("input", renderMenu);
-updateCartCount();
+updateCartBadge();
 loadMenu();

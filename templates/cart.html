@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}My Cart | CollegeBites{% endblock %}
+
+{% block content %}
+<main class="container page">
+    <section class="page-heading">
+        <div>
+            <p class="eyebrow">READY WHEN YOU ARE</p>
+            <h1>My Cart</h1>
+            <p>Review your picks, add your details, and place the order.</p>
+        </div>
+        <a class="btn btn-secondary" href="{{ url_for('menu_page') }}">Back to menu</a>
+    </section>
+
+    <div class="cart-layout">
+        <section class="panel cart-items-panel">
+            <div id="cart-message" class="alert alert-info" role="status" hidden></div>
+            <div id="cart-items"></div>
+            <div id="cart-empty" class="empty-state" hidden>
+                <h2>Your cart is empty</h2>
+                <p>Add a few dishes from the menu to get started.</p>
+                <a class="btn btn-primary" href="{{ url_for('menu_page') }}">Browse menu</a>
+            </div>
+        </section>
+
+        <aside class="panel cart-summary">
+            <h2>Order Summary</h2>
+            <div class="summary-row">
+                <span>Items</span>
+                <span id="summary-items">0</span>
+            </div>
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span id="summary-subtotal">₹0.00</span>
+            </div>
+            <div class="summary-row summary-total">
+                <span>Total</span>
+                <span id="summary-total">₹0.00</span>
+            </div>
+
+            <form id="checkout-form" class="checkout-form" novalidate>
+                <div class="field">
+                    <label for="customer-name">Your name</label>
+                    <input id="customer-name" name="customer_name" type="text"
+                           maxlength="100" placeholder="e.g. Nithin" required>
+                </div>
+                <div class="field">
+                    <label for="customer-contact">Contact (optional)</label>
+                    <input id="customer-contact" name="customer_contact" type="text"
+                           maxlength="30" placeholder="Phone number or email">
+                </div>
+                <button id="place-order" class="btn btn-primary" type="submit">
+                    Place Order
+                </button>
+            </form>
+
+            <button id="clear-cart" class="btn btn-ghost" type="button">
+                Clear cart
+            </button>
+            <p class="fine-print">
+                Pay at the canteen counter when you pick up your order.
+            </p>
+        </aside>
+    </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/cart.js') }}" defer></script>
+{% endblock %}
